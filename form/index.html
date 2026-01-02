@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Story Idea Submission</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Story Idea</h1>
+            <p class="subtitle">Receive Story Ideas</p>
+        </div>
+
+        <form id="storyForm">
+            <div class="form-group">
+                <label for="book_name">Book Name</label>
+                <input
+                    type="text"
+                    id="book_name"
+                    name="book_name"
+                    placeholder="Enter book name"
+                    autocomplete="off"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="outline_of_story">
+                    Outline of Story <span class="required">*</span>
+                </label>
+                <textarea
+                    id="outline_of_story"
+                    name="outline_of_story"
+                    rows="6"
+                    required
+                    placeholder="Describe your story outline in detail..."
+                ></textarea>
+                <div class="field-hint">This is the only required field</div>
+            </div>
+
+            <div class="form-group">
+                <label for="genre">Genre</label>
+                <input
+                    type="text"
+                    id="genre"
+                    name="genre"
+                    placeholder="e.g., Fantasy, Sci-Fi, Mystery, Romance"
+                    autocomplete="off"
+                >
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="number_of_chapters">Number of Chapters</label>
+                    <input
+                        type="number"
+                        id="number_of_chapters"
+                        name="number_of_chapters"
+                        min="1"
+                        step="1"
+                        placeholder="0"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="word_counter_per_chapter">Word Counter per Chapter</label>
+                    <input
+                        type="number"
+                        id="word_counter_per_chapter"
+                        name="word_counter_per_chapter"
+                        min="100"
+                        step="100"
+                        placeholder="0"
+                    >
+                </div>
+            </div>
+
+            <div id="totalWordsDisplay" class="total-words hidden">
+                <strong>Estimated Total Words:</strong> <span id="totalWordsValue">0</span>
+            </div>
+
+            <button type="submit" class="submit-btn">Submit Story Idea</button>
+        </form>
+
+        <div id="message" class="message hidden"></div>
+
+        <div class="footer">
+            <p>Powered by <strong>n8n</strong></p>
+            <div class="n8n-logo">
+                <span class="circle"></span>
+                <span class="circle"></span>
+                <span class="circle"></span>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,550 @@
+{
+  "name": "Story Initialization Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "story-submission",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook - Story Submission",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ],
+      "webhookId": "story-submission-webhook"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Generate unique Story ID\nconst storyId = `STORY_${Date.now()}`;\n\n// Extract form data\nconst bookName = $input.item.json.body.book_name || 'Untitled';\nconst outlineOfStory = $input.item.json.body.outline_of_story || '';\nconst genre = $input.item.json.body.genre || 'General';\nconst numberOfChapters = parseInt($input.item.json.body.number_of_chapters) || 0;\nconst wordsPerChapter = parseInt($input.item.json.body.word_counter_per_chapter) || 0;\n\n// Calculate total word count\nconst calculatedTotalWords = numberOfChapters * wordsPerChapter;\n\n// Generate timestamp\nconst submissionTimestamp = new Date().toISOString();\n\n// Return formatted data\nreturn {\n  json: {\n    story_id: storyId,\n    book_name: bookName,\n    outline_of_story: outlineOfStory,\n    genre: genre,\n    number_of_chapters: numberOfChapters,\n    word_counter_per_chapter: wordsPerChapter,\n    calculated_total_words: calculatedTotalWords,\n    submission_timestamp: submissionTimestamp\n  }\n};"
+      },
+      "id": "function-generate-id",
+      "name": "Generate Story ID & Calculate Words",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "{{PLACEHOLDER_SHEET_ID}}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Form_Submissions",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "story_id": "={{ $json.story_id }}",
+            "book_name": "={{ $json.book_name }}",
+            "outline_of_story": "={{ $json.outline_of_story }}",
+            "genre": "={{ $json.genre }}",
+            "number_of_chapters": "={{ $json.number_of_chapters }}",
+            "word_counter_per_chapter": "={{ $json.word_counter_per_chapter }}",
+            "calculated_total_words": "={{ $json.calculated_total_words }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "story_id",
+              "displayName": "story_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "book_name",
+              "displayName": "book_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "outline_of_story",
+              "displayName": "outline_of_story",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "genre",
+              "displayName": "genre",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "number_of_chapters",
+              "displayName": "number_of_chapters",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "word_counter_per_chapter",
+              "displayName": "word_counter_per_chapter",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "calculated_total_words",
+              "displayName": "calculated_total_words",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "sheets-insert",
+      "name": "Google Sheets - Insert Submission",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        680,
+        300
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "{{GOOGLE_SHEETS_CREDENTIAL_ID}}",
+          "name": "Google Sheets Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "folder",
+        "operation": "create",
+        "name": "={{ $json.story_id }}",
+        "options": {
+          "parentId": {
+            "__rl": true,
+            "value": "{{PLACEHOLDER_STORIES_FOLDER_ID}}",
+            "mode": "id"
+          }
+        }
+      },
+      "id": "drive-create-story-folder",
+      "name": "Google Drive - Create Story Folder",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        900,
+        300
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "{{GOOGLE_DRIVE_CREDENTIAL_ID}}",
+          "name": "Google Drive Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "folder",
+        "operation": "create",
+        "name": "={{ $json.book_name }}",
+        "options": {
+          "parentId": {
+            "__rl": true,
+            "value": "={{ $node['Google Drive - Create Story Folder'].json.id }}",
+            "mode": "id"
+          }
+        }
+      },
+      "id": "drive-create-book-folder",
+      "name": "Google Drive - Create Book Folder",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1120,
+        300
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "{{GOOGLE_DRIVE_CREDENTIAL_ID}}",
+          "name": "Google Drive Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "{{PLACEHOLDER_SYNOPSIS_WEBHOOK_URL}}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "story_id",
+              "value": "={{ $json.story_id }}"
+            },
+            {
+              "name": "book_name",
+              "value": "={{ $json.book_name }}"
+            },
+            {
+              "name": "outline_of_story",
+              "value": "={{ $json.outline_of_story }}"
+            },
+            {
+              "name": "genre",
+              "value": "={{ $json.genre }}"
+            },
+            {
+              "name": "number_of_chapters",
+              "value": "={{ $json.number_of_chapters }}"
+            },
+            {
+              "name": "word_counter_per_chapter",
+              "value": "={{ $json.word_counter_per_chapter }}"
+            },
+            {
+              "name": "calculated_total_words",
+              "value": "={{ $json.calculated_total_words }}"
+            },
+            {
+              "name": "drive_folder_id",
+              "value": "={{ $node['Google Drive - Create Book Folder'].json.id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "http-synopsis",
+      "name": "Trigger Synopsis Workflow",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1340,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "{{PLACEHOLDER_CHARACTER_WEBHOOK_URL}}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "story_id",
+              "value": "={{ $json.story_id }}"
+            },
+            {
+              "name": "book_name",
+              "value": "={{ $json.book_name }}"
+            },
+            {
+              "name": "outline_of_story",
+              "value": "={{ $json.outline_of_story }}"
+            },
+            {
+              "name": "genre",
+              "value": "={{ $json.genre }}"
+            },
+            {
+              "name": "number_of_chapters",
+              "value": "={{ $json.number_of_chapters }}"
+            },
+            {
+              "name": "word_counter_per_chapter",
+              "value": "={{ $json.word_counter_per_chapter }}"
+            },
+            {
+              "name": "calculated_total_words",
+              "value": "={{ $json.calculated_total_words }}"
+            },
+            {
+              "name": "drive_folder_id",
+              "value": "={{ $node['Google Drive - Create Book Folder'].json.id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "http-character",
+      "name": "Trigger Character Workflow",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1340,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "{{PLACEHOLDER_WORLDBUILDING_WEBHOOK_URL}}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "story_id",
+              "value": "={{ $json.story_id }}"
+            },
+            {
+              "name": "book_name",
+              "value": "={{ $json.book_name }}"
+            },
+            {
+              "name": "outline_of_story",
+              "value": "={{ $json.outline_of_story }}"
+            },
+            {
+              "name": "genre",
+              "value": "={{ $json.genre }}"
+            },
+            {
+              "name": "number_of_chapters",
+              "value": "={{ $json.number_of_chapters }}"
+            },
+            {
+              "name": "word_counter_per_chapter",
+              "value": "={{ $json.word_counter_per_chapter }}"
+            },
+            {
+              "name": "calculated_total_words",
+              "value": "={{ $json.calculated_total_words }}"
+            },
+            {
+              "name": "drive_folder_id",
+              "value": "={{ $node['Google Drive - Create Book Folder'].json.id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "http-worldbuilding",
+      "name": "Trigger Worldbuilding Workflow",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1340,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "{{PLACEHOLDER_CHAPTER_WEBHOOK_URL}}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "story_id",
+              "value": "={{ $json.story_id }}"
+            },
+            {
+              "name": "book_name",
+              "value": "={{ $json.book_name }}"
+            },
+            {
+              "name": "outline_of_story",
+              "value": "={{ $json.outline_of_story }}"
+            },
+            {
+              "name": "genre",
+              "value": "={{ $json.genre }}"
+            },
+            {
+              "name": "number_of_chapters",
+              "value": "={{ $json.number_of_chapters }}"
+            },
+            {
+              "name": "word_counter_per_chapter",
+              "value": "={{ $json.word_counter_per_chapter }}"
+            },
+            {
+              "name": "calculated_total_words",
+              "value": "={{ $json.calculated_total_words }}"
+            },
+            {
+              "name": "drive_folder_id",
+              "value": "={{ $node['Google Drive - Create Book Folder'].json.id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "http-chapter",
+      "name": "Trigger Chapter Planning Workflow",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1340,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"story_id\": \"{{ $json.story_id }}\",\n  \"message\": \"Your story '{{ $json.book_name }}' has been submitted successfully! All workflows have been triggered.\",\n  \"details\": {\n    \"book_name\": \"{{ $json.book_name }}\",\n    \"genre\": \"{{ $json.genre }}\",\n    \"chapters\": {{ $json.number_of_chapters }},\n    \"words_per_chapter\": {{ $json.word_counter_per_chapter }},\n    \"total_words\": {{ $json.calculated_total_words }}\n  }\n}",
+        "options": {}
+      },
+      "id": "respond-webhook",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1560,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook - Story Submission": {
+      "main": [
+        [
+          {
+            "node": "Generate Story ID & Calculate Words",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Story ID & Calculate Words": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets - Insert Submission",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets - Insert Submission": {
+      "main": [
+        [
+          {
+            "node": "Google Drive - Create Story Folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive - Create Story Folder": {
+      "main": [
+        [
+          {
+            "node": "Google Drive - Create Book Folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive - Create Book Folder": {
+      "main": [
+        [
+          {
+            "node": "Trigger Synopsis Workflow",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Trigger Character Workflow",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Trigger Worldbuilding Workflow",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Trigger Chapter Planning Workflow",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger Synopsis Workflow": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger Character Workflow": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger Worldbuilding Workflow": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger Chapter Planning Workflow": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "pinData": {},
+  "meta": {
+    "instanceId": "n8n-story-gen-system"
+  }
+}

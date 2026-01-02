@@ -1,0 +1,178 @@
+{
+  "name": "Synopsis Development Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "synopsis-development",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook - Synopsis Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ],
+      "webhookId": "synopsis-development-webhook"
+    },
+    {
+      "parameters": {
+        "resource": "chat",
+        "operation": "create",
+        "model": {
+          "__rl": true,
+          "value": "gpt-4-turbo-preview",
+          "mode": "list"
+        },
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are a professional story development assistant specializing in creating detailed, comprehensive synopses for novels. You excel at understanding story outlines and expanding them into structured 3-act narratives with clear plot progression, character development, and thematic depth."
+            },
+            {
+              "role": "user",
+              "content": "=Create a detailed 3-act synopsis for a {{ $json.body.genre }} story.\n\n**Book Name:** {{ $json.body.book_name }}\n**Genre:** {{ $json.body.genre }}\n**Story Outline:** {{ $json.body.outline_of_story }}\n**Number of Chapters:** {{ $json.body.number_of_chapters }}\n**Words per Chapter:** {{ $json.body.word_counter_per_chapter }}\n**Total Word Count:** {{ $json.body.calculated_total_words }}\n\nGenerate a comprehensive synopsis structured into three acts:\n\n**ACT I: SETUP (Approximately {{ Math.floor($json.body.calculated_total_words * 0.25) }} words)**\n- Opening situation and setting\n- Introduce protagonist(s) and their ordinary world\n- Inciting incident that disrupts the status quo\n- First major turning point that propels the story forward\n\n**ACT II: CONFRONTATION (Approximately {{ Math.floor($json.body.calculated_total_words * 0.5) }} words)**\n- Rising action and escalating conflicts\n- Character development and relationship dynamics\n- Obstacles and complications\n- Midpoint revelation or major setback\n- Progressive complications leading to crisis\n- Lowest point or dark night of the soul\n\n**ACT III: RESOLUTION (Approximately {{ Math.floor($json.body.calculated_total_words * 0.25) }} words)**\n- Climactic confrontation\n- Resolution of main conflict\n- Character transformation and growth\n- Denouement and new equilibrium\n- Thematic payoff\n\nFor each act, include:\n- Major plot points and story beats\n- Character arcs and development moments\n- Key conflicts (internal and external)\n- Emotional journey of the protagonist\n- Thematic elements and their evolution\n\nEnsure the synopsis flows naturally and provides a complete narrative arc that will guide the development of {{ $json.body.number_of_chapters }} chapters."
+            }
+          ]
+        },
+        "options": {
+          "temperature": 0.7,
+          "maxTokens": 4000
+        }
+      },
+      "id": "openai-synopsis",
+      "name": "OpenAI - Generate Synopsis",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [
+        460,
+        300
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "{{OPENAI_CREDENTIAL_ID}}",
+          "name": "OpenAI Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "// Extract synopsis from OpenAI response\nconst synopsisContent = $input.item.json.choices[0].message.content;\n\n// Get story metadata from webhook input\nconst storyId = $node['Webhook - Synopsis Trigger'].json.body.story_id;\nconst bookName = $node['Webhook - Synopsis Trigger'].json.body.book_name;\nconst genre = $node['Webhook - Synopsis Trigger'].json.body.genre;\nconst totalWords = $node['Webhook - Synopsis Trigger'].json.body.calculated_total_words;\nconst driveFolderId = $node['Webhook - Synopsis Trigger'].json.body.drive_folder_id;\n\n// Format synopsis document with metadata header\nconst formattedSynopsis = `========================================\nSTORY SYNOPSIS\n========================================\n\nBook Name: ${bookName}\nStory ID: ${storyId}\nGenre: ${genre}\nTarget Word Count: ${totalWords} words\nGenerated: ${new Date().toISOString()}\n\n========================================\n\n${synopsisContent}\n\n========================================\nEND OF SYNOPSIS\n========================================`;\n\nreturn {\n  json: {\n    story_id: storyId,\n    book_name: bookName,\n    synopsis: formattedSynopsis,\n    synopsis_raw: synopsisContent,\n    drive_folder_id: driveFolderId,\n    generated_at: new Date().toISOString()\n  }\n};"
+      },
+      "id": "function-format",
+      "name": "Format Synopsis Document",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        680,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "file",
+        "operation": "upload",
+        "name": "={{ $json.story_id }}_synopsis.txt",
+        "inputDataFieldName": "=synopsis",
+        "options": {
+          "parentId": {
+            "__rl": true,
+            "value": "={{ $json.drive_folder_id }}",
+            "mode": "id"
+          },
+          "useBase64Encoding": false,
+          "mimeType": "text/plain"
+        }
+      },
+      "id": "drive-upload",
+      "name": "Google Drive - Upload Synopsis",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        900,
+        300
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "{{GOOGLE_DRIVE_CREDENTIAL_ID}}",
+          "name": "Google Drive Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"workflow\": \"Synopsis Development\",\n  \"story_id\": \"{{ $json.story_id }}\",\n  \"book_name\": \"{{ $json.book_name }}\",\n  \"message\": \"Synopsis generated and saved successfully\",\n  \"file_id\": \"{{ $node['Google Drive - Upload Synopsis'].json.id }}\",\n  \"generated_at\": \"{{ $json.generated_at }}\"\n}",
+        "options": {}
+      },
+      "id": "respond-webhook",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook - Synopsis Trigger": {
+      "main": [
+        [
+          {
+            "node": "OpenAI - Generate Synopsis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI - Generate Synopsis": {
+      "main": [
+        [
+          {
+            "node": "Format Synopsis Document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Synopsis Document": {
+      "main": [
+        [
+          {
+            "node": "Google Drive - Upload Synopsis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive - Upload Synopsis": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "pinData": {},
+  "meta": {
+    "instanceId": "n8n-story-gen-system"
+  }
+}

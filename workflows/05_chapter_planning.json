@@ -1,0 +1,178 @@
+{
+  "name": "Chapter Planning Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "chapter-planning",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook - Chapter Planning Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ],
+      "webhookId": "chapter-planning-webhook"
+    },
+    {
+      "parameters": {
+        "resource": "chat",
+        "operation": "create",
+        "model": {
+          "__rl": true,
+          "value": "gpt-4-turbo-preview",
+          "mode": "list"
+        },
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are an expert novel planning specialist with deep knowledge of story structure, pacing, and chapter organization. You excel at breaking down stories into compelling chapter-by-chapter outlines that maintain narrative momentum and reader engagement."
+            },
+            {
+              "role": "user",
+              "content": "=Create detailed chapter-by-chapter outlines for a {{ $json.body.genre }} story.\n\n**Book Name:** {{ $json.body.book_name }}\n**Genre:** {{ $json.body.genre }}\n**Story Outline:** {{ $json.body.outline_of_story }}\n**Number of Chapters:** {{ $json.body.number_of_chapters }}\n**Target Words per Chapter:** {{ $json.body.word_counter_per_chapter }}\n**Total Word Count:** {{ $json.body.calculated_total_words }}\n\n**IMPORTANT:** Create exactly {{ $json.body.number_of_chapters }} chapter outlines. Do not suggest a different number of chapters.\n\nFor each of the {{ $json.body.number_of_chapters }} chapters, provide:\n\n**CHAPTER [NUMBER]: [Compelling Chapter Title]**\n\n**Target Word Count:** {{ $json.body.word_counter_per_chapter }} words\n\n**Setting and Timeframe:**\n- Where does this chapter take place?\n- When does it occur (relative to previous chapters)?\n- Time span covered in this chapter\n\n**POV Character(s):**\n- Whose perspective tells this chapter?\n- Why is this POV choice important for this section?\n\n**Opening:**\n- How does the chapter begin?\n- Hook or attention-grabber\n- Connection to previous chapter (if applicable)\n\n**Key Events and Scenes:**\n- Major plot developments (2-4 scenes)\n- Action beats and dramatic moments\n- Revelations or discoveries\n- Conflicts introduced or escalated\n\n**Character Development:**\n- Character growth moments\n- Relationship dynamics\n- Internal struggles or realizations\n- Dialogue-driven character reveals\n\n**Plot Progression:**\n- How does this chapter advance the main plot?\n- Subplots developed\n- Questions raised or answered\n- Story beats achieved\n\n**Thematic Elements:**\n- Themes explored in this chapter\n- Symbolic moments\n- Emotional resonance\n\n**Ending/Transition:**\n- How does the chapter end?\n- Cliffhanger, resolution, or transition?\n- Hook for the next chapter\n- Emotional note to leave the reader on\n\n**Chapter Purpose:**\n- Why is this chapter necessary?\n- What would be lost without it?\n\n---\n\nEnsure the chapters:\n- Follow a logical narrative progression\n- Maintain pacing (mix of action, character development, and quieter moments)\n- Build toward climactic moments\n- Each chapter has a clear purpose and advances the story\n- Early chapters establish the world and characters\n- Middle chapters escalate conflict and complicate the plot\n- Later chapters build to and resolve the climax\n- The final chapter provides satisfying resolution\n\nCreate a cohesive reading experience across all {{ $json.body.number_of_chapters }} chapters that brings the story outline to life."
+            }
+          ]
+        },
+        "options": {
+          "temperature": 0.7,
+          "maxTokens": 4000
+        }
+      },
+      "id": "openai-chapters",
+      "name": "OpenAI - Generate Chapter Outlines",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [
+        460,
+        300
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "{{OPENAI_CREDENTIAL_ID}}",
+          "name": "OpenAI Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "// Extract chapter outlines from OpenAI response\nconst chapterContent = $input.item.json.choices[0].message.content;\n\n// Get story metadata from webhook input\nconst storyId = $node['Webhook - Chapter Planning Trigger'].json.body.story_id;\nconst bookName = $node['Webhook - Chapter Planning Trigger'].json.body.book_name;\nconst genre = $node['Webhook - Chapter Planning Trigger'].json.body.genre;\nconst numberOfChapters = $node['Webhook - Chapter Planning Trigger'].json.body.number_of_chapters;\nconst wordsPerChapter = $node['Webhook - Chapter Planning Trigger'].json.body.word_counter_per_chapter;\nconst totalWords = $node['Webhook - Chapter Planning Trigger'].json.body.calculated_total_words;\nconst driveFolderId = $node['Webhook - Chapter Planning Trigger'].json.body.drive_folder_id;\n\n// Format chapter planning document with metadata header\nconst formattedChapters = `========================================\nCHAPTER PLANNING\n========================================\n\nBook Name: ${bookName}\nStory ID: ${storyId}\nGenre: ${genre}\nNumber of Chapters: ${numberOfChapters}\nTarget Words per Chapter: ${wordsPerChapter}\nTotal Word Count: ${totalWords}\nGenerated: ${new Date().toISOString()}\n\n========================================\n\n${chapterContent}\n\n========================================\nEND OF CHAPTER PLANNING\n========================================\n\nPLANNING SUMMARY:\n- Chapters: ${numberOfChapters}\n- Average Chapter Length: ${wordsPerChapter} words\n- Total Story Length: ${totalWords} words\n- Structure: Following 3-act structure with appropriate pacing\n`;\n\nreturn {\n  json: {\n    story_id: storyId,\n    book_name: bookName,\n    chapter_plan: formattedChapters,\n    chapter_plan_raw: chapterContent,\n    number_of_chapters: numberOfChapters,\n    words_per_chapter: wordsPerChapter,\n    drive_folder_id: driveFolderId,\n    generated_at: new Date().toISOString()\n  }\n};"
+      },
+      "id": "function-format",
+      "name": "Format Chapter Planning Document",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        680,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "file",
+        "operation": "upload",
+        "name": "={{ $json.story_id }}_chapter_plan.txt",
+        "inputDataFieldName": "=chapter_plan",
+        "options": {
+          "parentId": {
+            "__rl": true,
+            "value": "={{ $json.drive_folder_id }}",
+            "mode": "id"
+          },
+          "useBase64Encoding": false,
+          "mimeType": "text/plain"
+        }
+      },
+      "id": "drive-upload",
+      "name": "Google Drive - Upload Chapter Plan",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        900,
+        300
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "{{GOOGLE_DRIVE_CREDENTIAL_ID}}",
+          "name": "Google Drive Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"workflow\": \"Chapter Planning\",\n  \"story_id\": \"{{ $json.story_id }}\",\n  \"book_name\": \"{{ $json.book_name }}\",\n  \"message\": \"Chapter planning generated and saved successfully\",\n  \"chapters_created\": {{ $json.number_of_chapters }},\n  \"words_per_chapter\": {{ $json.words_per_chapter }},\n  \"file_id\": \"{{ $node['Google Drive - Upload Chapter Plan'].json.id }}\",\n  \"generated_at\": \"{{ $json.generated_at }}\"\n}",
+        "options": {}
+      },
+      "id": "respond-webhook",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook - Chapter Planning Trigger": {
+      "main": [
+        [
+          {
+            "node": "OpenAI - Generate Chapter Outlines",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI - Generate Chapter Outlines": {
+      "main": [
+        [
+          {
+            "node": "Format Chapter Planning Document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Chapter Planning Document": {
+      "main": [
+        [
+          {
+            "node": "Google Drive - Upload Chapter Plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive - Upload Chapter Plan": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "pinData": {},
+  "meta": {
+    "instanceId": "n8n-story-gen-system"
+  }
+}

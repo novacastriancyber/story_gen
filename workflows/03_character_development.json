@@ -1,0 +1,178 @@
+{
+  "name": "Character Development Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "character-development",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook - Character Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ],
+      "webhookId": "character-development-webhook"
+    },
+    {
+      "parameters": {
+        "resource": "chat",
+        "operation": "create",
+        "model": {
+          "__rl": true,
+          "value": "gpt-4-turbo-preview",
+          "mode": "list"
+        },
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are a professional character development specialist with expertise in creating multi-dimensional, compelling characters for novels. You excel at developing character arcs, backstories, motivations, and relationships that drive narrative conflict and emotional engagement."
+            },
+            {
+              "role": "user",
+              "content": "=Create comprehensive character profiles for a {{ $json.body.genre }} story.\n\n**Book Name:** {{ $json.body.book_name }}\n**Genre:** {{ $json.body.genre }}\n**Story Outline:** {{ $json.body.outline_of_story }}\n\nGenerate 5-7 main character profiles with the following details for each:\n\n**CHARACTER PROFILE TEMPLATE:**\n\n1. **Name and Role**\n   - Full name\n   - Role in the story (protagonist, antagonist, supporting, etc.)\n   - Age and occupation\n\n2. **Physical Description**\n   - Appearance (height, build, distinctive features)\n   - Style and manner of dress\n   - Body language and mannerisms\n\n3. **Personality Traits**\n   - Core personality characteristics\n   - Strengths and virtues\n   - Flaws and weaknesses\n   - Quirks and habits\n\n4. **Background/Backstory**\n   - Family history and upbringing\n   - Formative experiences\n   - Education and skills\n   - Key life events that shaped them\n\n5. **Motivations and Goals**\n   - Primary desire/goal\n   - Secondary objectives\n   - What they're willing to do to achieve their goals\n   - What lines they won't cross\n\n6. **Character Arc**\n   - Starting point (who they are at the beginning)\n   - Transformation throughout the story\n   - Ending point (who they become)\n   - Key moments of growth or change\n\n7. **Relationships**\n   - Connections to other characters\n   - Allies and enemies\n   - Romantic interests\n   - Mentors or rivals\n\n8. **Internal Conflicts**\n   - Inner demons or struggles\n   - Fears and insecurities\n   - Contradictions in their nature\n   - Moral dilemmas they face\n\n9. **External Conflicts**\n   - Obstacles they must overcome\n   - Antagonistic forces\n   - Environmental or societal challenges\n\n10. **Voice and Dialogue**\n    - Speech patterns and vocabulary\n    - Catchphrases or recurring expressions\n    - How they communicate with different people\n\nEnsure characters are distinct, memorable, and serve specific narrative functions. Create authentic relationships and conflicts between characters that will drive the story forward."
+            }
+          ]
+        },
+        "options": {
+          "temperature": 0.8,
+          "maxTokens": 4000
+        }
+      },
+      "id": "openai-characters",
+      "name": "OpenAI - Generate Characters",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [
+        460,
+        300
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "{{OPENAI_CREDENTIAL_ID}}",
+          "name": "OpenAI Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "// Extract character profiles from OpenAI response\nconst characterContent = $input.item.json.choices[0].message.content;\n\n// Get story metadata from webhook input\nconst storyId = $node['Webhook - Character Trigger'].json.body.story_id;\nconst bookName = $node['Webhook - Character Trigger'].json.body.book_name;\nconst genre = $node['Webhook - Character Trigger'].json.body.genre;\nconst driveFolderId = $node['Webhook - Character Trigger'].json.body.drive_folder_id;\n\n// Format character document with metadata header\nconst formattedCharacters = `========================================\nCHARACTER DEVELOPMENT\n========================================\n\nBook Name: ${bookName}\nStory ID: ${storyId}\nGenre: ${genre}\nGenerated: ${new Date().toISOString()}\n\n========================================\n\n${characterContent}\n\n========================================\nEND OF CHARACTER PROFILES\n========================================`;\n\nreturn {\n  json: {\n    story_id: storyId,\n    book_name: bookName,\n    characters: formattedCharacters,\n    characters_raw: characterContent,\n    drive_folder_id: driveFolderId,\n    generated_at: new Date().toISOString()\n  }\n};"
+      },
+      "id": "function-format",
+      "name": "Format Character Document",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        680,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "file",
+        "operation": "upload",
+        "name": "={{ $json.story_id }}_characters.txt",
+        "inputDataFieldName": "=characters",
+        "options": {
+          "parentId": {
+            "__rl": true,
+            "value": "={{ $json.drive_folder_id }}",
+            "mode": "id"
+          },
+          "useBase64Encoding": false,
+          "mimeType": "text/plain"
+        }
+      },
+      "id": "drive-upload",
+      "name": "Google Drive - Upload Characters",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        900,
+        300
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "{{GOOGLE_DRIVE_CREDENTIAL_ID}}",
+          "name": "Google Drive Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"workflow\": \"Character Development\",\n  \"story_id\": \"{{ $json.story_id }}\",\n  \"book_name\": \"{{ $json.book_name }}\",\n  \"message\": \"Character profiles generated and saved successfully\",\n  \"file_id\": \"{{ $node['Google Drive - Upload Characters'].json.id }}\",\n  \"generated_at\": \"{{ $json.generated_at }}\"\n}",
+        "options": {}
+      },
+      "id": "respond-webhook",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook - Character Trigger": {
+      "main": [
+        [
+          {
+            "node": "OpenAI - Generate Characters",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI - Generate Characters": {
+      "main": [
+        [
+          {
+            "node": "Format Character Document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Character Document": {
+      "main": [
+        [
+          {
+            "node": "Google Drive - Upload Characters",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive - Upload Characters": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "pinData": {},
+  "meta": {
+    "instanceId": "n8n-story-gen-system"
+  }
+}
