@@ -26,106 +26,81 @@
               "fieldType": "dropdown",
               "requiredField": false,
               "fieldOptions": {
-                "choices": [
+                "values": [
                   {
-                    "label": "Fantasy",
-                    "value": "Fantasy"
+                    "option": "Fantasy"
                   },
                   {
-                    "label": "Science Fiction",
-                    "value": "Science Fiction"
+                    "option": "Science Fiction"
                   },
                   {
-                    "label": "Romance",
-                    "value": "Romance"
+                    "option": "Romance"
                   },
                   {
-                    "label": "Mystery",
-                    "value": "Mystery"
+                    "option": "Mystery"
                   },
                   {
-                    "label": "Thriller",
-                    "value": "Thriller"
+                    "option": "Thriller"
                   },
                   {
-                    "label": "Horror",
-                    "value": "Horror"
+                    "option": "Horror"
                   },
                   {
-                    "label": "Historical Fiction",
-                    "value": "Historical Fiction"
+                    "option": "Historical Fiction"
                   },
                   {
-                    "label": "Literary Fiction",
-                    "value": "Literary Fiction"
+                    "option": "Literary Fiction"
                   },
                   {
-                    "label": "Contemporary Fiction",
-                    "value": "Contemporary Fiction"
+                    "option": "Contemporary Fiction"
                   },
                   {
-                    "label": "Young Adult",
-                    "value": "Young Adult"
+                    "option": "Young Adult"
                   },
                   {
-                    "label": "Adventure",
-                    "value": "Adventure"
+                    "option": "Adventure"
                   },
                   {
-                    "label": "Crime",
-                    "value": "Crime"
+                    "option": "Crime"
                   },
                   {
-                    "label": "Western",
-                    "value": "Western"
+                    "option": "Western"
                   },
                   {
-                    "label": "Dystopian",
-                    "value": "Dystopian"
+                    "option": "Dystopian"
                   },
                   {
-                    "label": "Paranormal",
-                    "value": "Paranormal"
+                    "option": "Paranormal"
                   },
                   {
-                    "label": "Humor",
-                    "value": "Humor"
+                    "option": "Humor"
                   },
                   {
-                    "label": "Satire",
-                    "value": "Satire"
+                    "option": "Satire"
                   },
                   {
-                    "label": "Women's Fiction",
-                    "value": "Women's Fiction"
+                    "option": "Women's Fiction"
                   },
                   {
-                    "label": "Action",
-                    "value": "Action"
+                    "option": "Action"
                   },
                   {
-                    "label": "Suspense",
-                    "value": "Suspense"
+                    "option": "Suspense"
                   },
                   {
-                    "label": "Drama",
-                    "value": "Drama"
+                    "option": "Drama"
                   },
                   {
-                    "label": "Magical Realism",
-                    "value": "Magical Realism"
+                    "option": "Magical Realism"
                   },
                   {
-                    "label": "Gothic",
-                    "value": "Gothic"
+                    "option": "Gothic"
                   },
                   {
-                    "label": "Erotica",
-                    "value": "Erotica"
+                    "option": "Erotica"
                   },
                   {
-                    "label": "Urban Fantasy",
-                    "value": "Urban Fantasy"
+                    "option": "Urban Fantasy"
                   }
                 ]
               }
