@@ -20,48 +20,24 @@
     },
     {
       "parameters": {
-        "resource": "chat",
-        "operation": "create",
-        "model": {
-          "__rl": true,
-          "value": "gpt-4-turbo-preview",
-          "mode": "list"
-        },
-        "messages": {
-          "values": [
-            {
-              "role": "system",
-              "content": "You are a master worldbuilding expert specializing in creating immersive, cohesive fictional worlds for novels. You excel at developing rich settings with detailed cultures, histories, and internal logic that support compelling narratives."
-            },
-            {
-              "role": "user",
-              "content": "=Create comprehensive worldbuilding documentation for a {{ $json.body.genre }} story.\n\n**Book Name:** {{ $json.body.book_name }}\n**Genre:** {{ $json.body.genre }}\n**Story Outline:** {{ $json.body.outline_of_story }}\n\nDevelop detailed world elements across the following categories:\n\n**1. SETTING AND GEOGRAPHY**\n   - Time period (historical, contemporary, future, alternate timeline)\n   - Primary locations and their significance\n   - Geography and climate\n   - Notable landmarks and regions\n   - Maps and spatial relationships\n\n**2. SOCIAL STRUCTURE AND CULTURE**\n   - Social hierarchy and class systems\n   - Cultural norms and values\n   - Traditions and customs\n   - Education systems\n   - Family structures\n   - Gender roles and expectations\n   - Ethnic groups and diversity\n\n**3. POLITICAL SYSTEMS**\n   - Forms of government\n   - Power structures and leadership\n   - Political factions and conflicts\n   - Laws and justice systems\n   - International/inter-regional relations\n\n**4. ECONOMIC SYSTEMS**\n   - Currency and trade\n   - Major industries and resources\n   - Wealth distribution\n   - Economic challenges or inequalities\n\n**5. TECHNOLOGY AND INNOVATION**\n   - Level of technological advancement\n   - Key technologies and their impact\n   - Scientific knowledge and capabilities\n   - Communication methods\n   - Transportation systems\n\n**6. MAGIC AND SUPERNATURAL ELEMENTS** (if applicable to genre)\n   - Magic system rules and limitations\n   - Who can use magic and how\n   - Costs or consequences of magic use\n   - Supernatural beings or forces\n   - How magic interacts with society\n\n**7. HISTORY AND LORE**\n   - Major historical events\n   - Myths, legends, and folklore\n   - How the past shapes the present\n   - Historical conflicts and their resolutions\n   - Founding stories and cultural origin myths\n\n**8. RELIGION AND BELIEF SYSTEMS**\n   - Deities or spiritual beliefs\n   - Religious institutions and their influence\n   - Rituals and practices\n   - Competing belief systems\n   - Role of religion in daily life\n\n**9. RULES AND LAWS OF THE WORLD**\n   - Physical laws (especially if different from reality)\n   - Social contracts and taboos\n   - Consequences for rule-breaking\n   - Universal truths within this world\n\n**10. UNIQUE ASPECTS**\n   - What makes this world distinctive\n   - Signature elements that set it apart\n   - Atmospheric details and sensory elements\n   - Potential for expansion in sequels\n\nEnsure all worldbuilding elements:\n- Support and enhance the story outline\n- Have internal consistency and logic\n- Create opportunities for conflict and drama\n- Feel authentic and lived-in\n- Provide context for character motivations and actions"
-            }
-          ]
-        },
+        "hasOutputParser": true,
+        "text": "=Create comprehensive worldbuilding documentation for a {{ $json.body.genre }} story.\n\n**Book Name:** {{ $json.body.book_name }}\n**Genre:** {{ $json.body.genre }}\n**Story Outline:** {{ $json.body.outline_of_story }}\n\nDevelop detailed world elements across the following categories:\n\n**1. SETTING AND GEOGRAPHY**\n   - Time period (historical, contemporary, future, alternate timeline)\n   - Primary locations and their significance\n   - Geography and climate\n   - Notable landmarks and regions\n   - Maps and spatial relationships\n\n**2. SOCIAL STRUCTURE AND CULTURE**\n   - Social hierarchy and class systems\n   - Cultural norms and values\n   - Traditions and customs\n   - Education systems\n   - Family structures\n   - Gender roles and expectations\n   - Ethnic groups and diversity\n\n**3. POLITICAL SYSTEMS**\n   - Forms of government\n   - Power structures and leadership\n   - Political factions and conflicts\n   - Laws and justice systems\n   - International/inter-regional relations\n\n**4. ECONOMIC SYSTEMS**\n   - Currency and trade\n   - Major industries and resources\n   - Wealth distribution\n   - Economic challenges or inequalities\n\n**5. TECHNOLOGY AND INNOVATION**\n   - Level of technological advancement\n   - Key technologies and their impact\n   - Scientific knowledge and capabilities\n   - Communication methods\n   - Transportation systems\n\n**6. MAGIC AND SUPERNATURAL ELEMENTS** (if applicable to genre)\n   - Magic system rules and limitations\n   - Who can use magic and how\n   - Costs or consequences of magic use\n   - Supernatural beings or forces\n   - How magic interacts with society\n\n**7. HISTORY AND LORE**\n   - Major historical events\n   - Myths, legends, and folklore\n   - How the past shapes the present\n   - Historical conflicts and their resolutions\n   - Founding stories and cultural origin myths\n\n**8. RELIGION AND BELIEF SYSTEMS**\n   - Deities or spiritual beliefs\n   - Religious institutions and their influence\n   - Rituals and practices\n   - Competing belief systems\n   - Role of religion in daily life\n\n**9. RULES AND LAWS OF THE WORLD**\n   - Physical laws (especially if different from reality)\n   - Social contracts and taboos\n   - Consequences for rule-breaking\n   - Universal truths within this world\n\n**10. UNIQUE ASPECTS**\n   - What makes this world distinctive\n   - Signature elements that set it apart\n   - Atmospheric details and sensory elements\n   - Potential for expansion in sequels\n\nEnsure all worldbuilding elements:\n- Support and enhance the story outline\n- Have internal consistency and logic\n- Create opportunities for conflict and drama\n- Feel authentic and lived-in\n- Provide context for character motivations and actions",
         "options": {
-          "temperature": 0.7,
-          "maxTokens": 4000
+          "systemMessage": "You are a master worldbuilding expert specializing in creating immersive, cohesive fictional worlds for novels. You excel at developing rich settings with detailed cultures, histories, and internal logic that support compelling narratives."
         }
       },
-      "id": "openai-worldbuilding",
-      "name": "OpenAI - Generate Worldbuilding",
-      "type": "n8n-nodes-base.openAi",
-      "typeVersion": 1,
+      "id": "ai-agent-worldbuilding",
+      "name": "AI Agent - Generate Worldbuilding",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
       "position": [
         460,
         300
-      ],
-      "credentials": {
-        "openAiApi": {
-          "id": "{{OPENAI_CREDENTIAL_ID}}",
-          "name": "OpenAI Account"
-        }
-      }
+      ]
     },
     {
       "parameters": {
-        "functionCode": "// Extract worldbuilding from OpenAI response\nconst worldbuildingContent = $input.item.json.choices[0].message.content;\n\n// Get story metadata from webhook input\nconst storyId = $node['Webhook - Worldbuilding Trigger'].json.body.story_id;\nconst bookName = $node['Webhook - Worldbuilding Trigger'].json.body.book_name;\nconst genre = $node['Webhook - Worldbuilding Trigger'].json.body.genre;\nconst driveFolderId = $node['Webhook - Worldbuilding Trigger'].json.body.drive_folder_id;\n\n// Format worldbuilding document with metadata header\nconst formattedWorldbuilding = `========================================\nWORLDBUILDING DOCUMENTATION\n========================================\n\nBook Name: ${bookName}\nStory ID: ${storyId}\nGenre: ${genre}\nGenerated: ${new Date().toISOString()}\n\n========================================\n\n${worldbuildingContent}\n\n========================================\nEND OF WORLDBUILDING\n========================================`;\n\nreturn {\n  json: {\n    story_id: storyId,\n    book_name: bookName,\n    worldbuilding: formattedWorldbuilding,\n    worldbuilding_raw: worldbuildingContent,\n    drive_folder_id: driveFolderId,\n    generated_at: new Date().toISOString()\n  }\n};"
+        "functionCode": "// Extract worldbuilding from AI Agent response\n// AI Agent with output parser returns the text directly in the output field\nconst worldbuildingContent = $input.item.json.output || $input.item.json.text || '';\n\n// Get story metadata from webhook input\nconst storyId = $node['Webhook - Worldbuilding Trigger'].json.body.story_id;\nconst bookName = $node['Webhook - Worldbuilding Trigger'].json.body.book_name;\nconst genre = $node['Webhook - Worldbuilding Trigger'].json.body.genre;\nconst driveFolderId = $node['Webhook - Worldbuilding Trigger'].json.body.drive_folder_id;\n\n// Format worldbuilding document with metadata header\nconst formattedWorldbuilding = `========================================\nWORLDBUILDING DOCUMENTATION\n========================================\n\nBook Name: ${bookName}\nStory ID: ${storyId}\nGenre: ${genre}\nGenerated: ${new Date().toISOString()}\n\n========================================\n\n${worldbuildingContent}\n\n========================================\nEND OF WORLDBUILDING\n========================================`;\n\nreturn {\n  json: {\n    story_id: storyId,\n    book_name: bookName,\n    worldbuilding: formattedWorldbuilding,\n    worldbuilding_raw: worldbuildingContent,\n    drive_folder_id: driveFolderId,\n    generated_at: new Date().toISOString()\n  }\n};"
       },
       "id": "function-format",
       "name": "Format Worldbuilding Document",
@@ -125,14 +101,14 @@
       "main": [
         [
           {
-            "node": "OpenAI - Generate Worldbuilding",
+            "node": "AI Agent - Generate Worldbuilding",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "OpenAI - Generate Worldbuilding": {
+    "AI Agent - Generate Worldbuilding": {
       "main": [
         [
           {

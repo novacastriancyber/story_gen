@@ -20,48 +20,24 @@
     },
     {
       "parameters": {
-        "resource": "chat",
-        "operation": "create",
-        "model": {
-          "__rl": true,
-          "value": "gpt-4-turbo-preview",
-          "mode": "list"
-        },
-        "messages": {
-          "values": [
-            {
-              "role": "system",
-              "content": "You are a professional story development assistant specializing in creating detailed, comprehensive synopses for novels. You excel at understanding story outlines and expanding them into structured 3-act narratives with clear plot progression, character development, and thematic depth."
-            },
-            {
-              "role": "user",
-              "content": "=Create a detailed 3-act synopsis for a {{ $json.body.genre }} story.\n\n**Book Name:** {{ $json.body.book_name }}\n**Genre:** {{ $json.body.genre }}\n**Story Outline:** {{ $json.body.outline_of_story }}\n**Number of Chapters:** {{ $json.body.number_of_chapters }}\n**Words per Chapter:** {{ $json.body.word_counter_per_chapter }}\n**Total Word Count:** {{ $json.body.calculated_total_words }}\n\nGenerate a comprehensive synopsis structured into three acts:\n\n**ACT I: SETUP (Approximately {{ Math.floor($json.body.calculated_total_words * 0.25) }} words)**\n- Opening situation and setting\n- Introduce protagonist(s) and their ordinary world\n- Inciting incident that disrupts the status quo\n- First major turning point that propels the story forward\n\n**ACT II: CONFRONTATION (Approximately {{ Math.floor($json.body.calculated_total_words * 0.5) }} words)**\n- Rising action and escalating conflicts\n- Character development and relationship dynamics\n- Obstacles and complications\n- Midpoint revelation or major setback\n- Progressive complications leading to crisis\n- Lowest point or dark night of the soul\n\n**ACT III: RESOLUTION (Approximately {{ Math.floor($json.body.calculated_total_words * 0.25) }} words)**\n- Climactic confrontation\n- Resolution of main conflict\n- Character transformation and growth\n- Denouement and new equilibrium\n- Thematic payoff\n\nFor each act, include:\n- Major plot points and story beats\n- Character arcs and development moments\n- Key conflicts (internal and external)\n- Emotional journey of the protagonist\n- Thematic elements and their evolution\n\nEnsure the synopsis flows naturally and provides a complete narrative arc that will guide the development of {{ $json.body.number_of_chapters }} chapters."
-            }
-          ]
-        },
+        "hasOutputParser": true,
+        "text": "=Create a detailed 3-act synopsis for a {{ $json.body.genre }} story.\n\n**Book Name:** {{ $json.body.book_name }}\n**Genre:** {{ $json.body.genre }}\n**Story Outline:** {{ $json.body.outline_of_story }}\n**Number of Chapters:** {{ $json.body.number_of_chapters }}\n**Words per Chapter:** {{ $json.body.word_counter_per_chapter }}\n**Total Word Count:** {{ $json.body.calculated_total_words }}\n\nGenerate a comprehensive synopsis structured into three acts:\n\n**ACT I: SETUP (Approximately {{ Math.floor($json.body.calculated_total_words * 0.25) }} words)**\n- Opening situation and setting\n- Introduce protagonist(s) and their ordinary world\n- Inciting incident that disrupts the status quo\n- First major turning point that propels the story forward\n\n**ACT II: CONFRONTATION (Approximately {{ Math.floor($json.body.calculated_total_words * 0.5) }} words)**\n- Rising action and escalating conflicts\n- Character development and relationship dynamics\n- Obstacles and complications\n- Midpoint revelation or major setback\n- Progressive complications leading to crisis\n- Lowest point or dark night of the soul\n\n**ACT III: RESOLUTION (Approximately {{ Math.floor($json.body.calculated_total_words * 0.25) }} words)**\n- Climactic confrontation\n- Resolution of main conflict\n- Character transformation and growth\n- Denouement and new equilibrium\n- Thematic payoff\n\nFor each act, include:\n- Major plot points and story beats\n- Character arcs and development moments\n- Key conflicts (internal and external)\n- Emotional journey of the protagonist\n- Thematic elements and their evolution\n\nEnsure the synopsis flows naturally and provides a complete narrative arc that will guide the development of {{ $json.body.number_of_chapters }} chapters.",
         "options": {
-          "temperature": 0.7,
-          "maxTokens": 4000
+          "systemMessage": "You are a professional story development assistant specializing in creating detailed, comprehensive synopses for novels. You excel at understanding story outlines and expanding them into structured 3-act narratives with clear plot progression, character development, and thematic depth."
         }
       },
-      "id": "openai-synopsis",
-      "name": "OpenAI - Generate Synopsis",
-      "type": "n8n-nodes-base.openAi",
-      "typeVersion": 1,
+      "id": "ai-agent-synopsis",
+      "name": "AI Agent - Generate Synopsis",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
       "position": [
         460,
         300
-      ],
-      "credentials": {
-        "openAiApi": {
-          "id": "{{OPENAI_CREDENTIAL_ID}}",
-          "name": "OpenAI Account"
-        }
-      }
+      ]
     },
     {
       "parameters": {
-        "functionCode": "// Extract synopsis from OpenAI response\nconst synopsisContent = $input.item.json.choices[0].message.content;\n\n// Get story metadata from webhook input\nconst storyId = $node['Webhook - Synopsis Trigger'].json.body.story_id;\nconst bookName = $node['Webhook - Synopsis Trigger'].json.body.book_name;\nconst genre = $node['Webhook - Synopsis Trigger'].json.body.genre;\nconst totalWords = $node['Webhook - Synopsis Trigger'].json.body.calculated_total_words;\nconst driveFolderId = $node['Webhook - Synopsis Trigger'].json.body.drive_folder_id;\n\n// Format synopsis document with metadata header\nconst formattedSynopsis = `========================================\nSTORY SYNOPSIS\n========================================\n\nBook Name: ${bookName}\nStory ID: ${storyId}\nGenre: ${genre}\nTarget Word Count: ${totalWords} words\nGenerated: ${new Date().toISOString()}\n\n========================================\n\n${synopsisContent}\n\n========================================\nEND OF SYNOPSIS\n========================================`;\n\nreturn {\n  json: {\n    story_id: storyId,\n    book_name: bookName,\n    synopsis: formattedSynopsis,\n    synopsis_raw: synopsisContent,\n    drive_folder_id: driveFolderId,\n    generated_at: new Date().toISOString()\n  }\n};"
+        "functionCode": "// Extract synopsis from AI Agent response\n// AI Agent with output parser returns the text directly in the output field\nconst synopsisContent = $input.item.json.output || $input.item.json.text || '';\n\n// Get story metadata from webhook input\nconst storyId = $node['Webhook - Synopsis Trigger'].json.body.story_id;\nconst bookName = $node['Webhook - Synopsis Trigger'].json.body.book_name;\nconst genre = $node['Webhook - Synopsis Trigger'].json.body.genre;\nconst totalWords = $node['Webhook - Synopsis Trigger'].json.body.calculated_total_words;\nconst driveFolderId = $node['Webhook - Synopsis Trigger'].json.body.drive_folder_id;\n\n// Format synopsis document with metadata header\nconst formattedSynopsis = `========================================\nSTORY SYNOPSIS\n========================================\n\nBook Name: ${bookName}\nStory ID: ${storyId}\nGenre: ${genre}\nTarget Word Count: ${totalWords} words\nGenerated: ${new Date().toISOString()}\n\n========================================\n\n${synopsisContent}\n\n========================================\nEND OF SYNOPSIS\n========================================`;\n\nreturn {\n  json: {\n    story_id: storyId,\n    book_name: bookName,\n    synopsis: formattedSynopsis,\n    synopsis_raw: synopsisContent,\n    drive_folder_id: driveFolderId,\n    generated_at: new Date().toISOString()\n  }\n};"
       },
       "id": "function-format",
       "name": "Format Synopsis Document",
@@ -125,14 +101,14 @@
       "main": [
         [
           {
-            "node": "OpenAI - Generate Synopsis",
+            "node": "AI Agent - Generate Synopsis",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "OpenAI - Generate Synopsis": {
+    "AI Agent - Generate Synopsis": {
       "main": [
         [
           {
