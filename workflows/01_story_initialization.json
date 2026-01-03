@@ -320,55 +320,65 @@
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "{{PLACEHOLDER_SYNOPSIS_WEBHOOK_URL}}",
-        "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "story_id",
-              "value": "={{ $json.story_id }}"
-            },
-            {
-              "name": "book_name",
-              "value": "={{ $json.book_name }}"
-            },
-            {
-              "name": "outline_of_story",
-              "value": "={{ $json.outline_of_story }}"
-            },
-            {
-              "name": "genre",
-              "value": "={{ $json.genre }}"
-            },
-            {
-              "name": "number_of_chapters",
-              "value": "={{ $json.number_of_chapters }}"
-            },
-            {
-              "name": "word_counter_per_chapter",
-              "value": "={{ $json.word_counter_per_chapter }}"
-            },
-            {
-              "name": "calculated_total_words",
-              "value": "={{ $json.calculated_total_words }}"
-            },
-            {
-              "name": "drive_folder_id",
-              "value": "={{ $node['Google Drive - Create Book Folder'].json.id }}"
-            }
-          ]
-        },
-        "options": {}
+        "hasOutputParser": true,
+        "text": "=Create a detailed 3-act synopsis for a {{ $json.genre }} story.\n\n**Book Name:** {{ $json.book_name }}\n**Genre:** {{ $json.genre }}\n**Story Outline:** {{ $json.outline_of_story }}\n**Number of Chapters:** {{ $json.number_of_chapters }}\n**Words per Chapter:** {{ $json.word_counter_per_chapter }}\n**Total Word Count:** {{ $json.calculated_total_words }}\n\nGenerate a comprehensive synopsis structured into three acts:\n\n**ACT I: SETUP (Approximately {{ Math.floor($json.calculated_total_words * 0.25) }} words)**\n- Opening situation and setting\n- Introduce protagonist(s) and their ordinary world\n- Inciting incident that disrupts the status quo\n- First major turning point that propels the story forward\n\n**ACT II: CONFRONTATION (Approximately {{ Math.floor($json.calculated_total_words * 0.5) }} words)**\n- Rising action and escalating conflicts\n- Character development and relationship dynamics\n- Obstacles and complications\n- Midpoint revelation or major setback\n- Progressive complications leading to crisis\n- Lowest point or dark night of the soul\n\n**ACT III: RESOLUTION (Approximately {{ Math.floor($json.calculated_total_words * 0.25) }} words)**\n- Climactic confrontation\n- Resolution of main conflict\n- Character transformation and growth\n- Denouement and new equilibrium\n- Thematic payoff\n\nFor each act, include:\n- Major plot points and story beats\n- Character arcs and development moments\n- Key conflicts (internal and external)\n- Emotional journey of the protagonist\n- Thematic elements and their evolution\n\nEnsure the synopsis flows naturally and provides a complete narrative arc that will guide the development of {{ $json.number_of_chapters }} chapters.",
+        "options": {
+          "systemMessage": "You are a professional story development assistant specializing in creating detailed, comprehensive synopses for novels. You excel at understanding story outlines and expanding them into structured 3-act narratives with clear plot progression, character development, and thematic depth."
+        }
       },
-      "id": "http-synopsis",
-      "name": "Trigger Synopsis Workflow",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
+      "id": "ai-agent-synopsis",
+      "name": "AI Agent - Generate Synopsis",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
       "position": [
         1340,
         200
       ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Extract synopsis from AI Agent response\n// AI Agent with output parser returns the text directly in the output field\nconst synopsisContent = $input.item.json.output || $input.item.json.text || '';\n\n// Get story metadata from previous nodes\nconst storyId = $node['Generate Story ID & Calculate Words'].json.story_id;\nconst bookName = $node['Generate Story ID & Calculate Words'].json.book_name;\nconst genre = $node['Generate Story ID & Calculate Words'].json.genre;\nconst totalWords = $node['Generate Story ID & Calculate Words'].json.calculated_total_words;\nconst driveFolderId = $node['Google Drive - Create Book Folder'].json.id;\n\n// Format synopsis document with metadata header\nconst formattedSynopsis = `========================================\nSTORY SYNOPSIS\n========================================\n\nBook Name: ${bookName}\nStory ID: ${storyId}\nGenre: ${genre}\nTarget Word Count: ${totalWords} words\nGenerated: ${new Date().toISOString()}\n\n========================================\n\n${synopsisContent}\n\n========================================\nEND OF SYNOPSIS\n========================================`;\n\nreturn {\n  json: {\n    story_id: storyId,\n    book_name: bookName,\n    synopsis: formattedSynopsis,\n    synopsis_raw: synopsisContent,\n    drive_folder_id: driveFolderId,\n    generated_at: new Date().toISOString()\n  }\n};"
+      },
+      "id": "function-format-synopsis",
+      "name": "Format Synopsis Document",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1560,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "file",
+        "operation": "upload",
+        "name": "={{ $json.story_id }}_synopsis.txt",
+        "inputDataFieldName": "=synopsis",
+        "options": {
+          "parentId": {
+            "__rl": true,
+            "value": "={{ $json.drive_folder_id }}",
+            "mode": "id"
+          },
+          "useBase64Encoding": false,
+          "mimeType": "text/plain"
+        }
+      },
+      "id": "drive-upload-synopsis",
+      "name": "Google Drive - Upload Synopsis",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1780,
+        200
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "{{GOOGLE_DRIVE_CREDENTIAL_ID}}",
+          "name": "Google Drive Account"
+        }
+      }
     },
     {
       "parameters": {
@@ -576,7 +586,7 @@
       "main": [
         [
           {
-            "node": "Trigger Synopsis Workflow",
+            "node": "AI Agent - Generate Synopsis",
             "type": "main",
             "index": 0
           },
@@ -592,6 +602,28 @@
           },
           {
             "node": "Trigger Chapter Planning Workflow",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent - Generate Synopsis": {
+      "main": [
+        [
+          {
+            "node": "Format Synopsis Document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Synopsis Document": {
+      "main": [
+        [
+          {
+            "node": "Google Drive - Upload Synopsis",
             "type": "main",
             "index": 0
           }
