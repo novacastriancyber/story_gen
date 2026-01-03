@@ -3,24 +3,68 @@
   "nodes": [
     {
       "parameters": {
-        "httpMethod": "POST",
-        "path": "story-submission",
-        "responseMode": "responseNode",
-        "options": {}
+        "formTitle": "Story Idea Submission",
+        "formDescription": "Submit your story idea and let AI help develop it into a complete narrative framework",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Book Name",
+              "fieldType": "text",
+              "requiredField": false,
+              "fieldOptions": {}
+            },
+            {
+              "fieldLabel": "Outline of Story",
+              "fieldType": "textarea",
+              "requiredField": true,
+              "fieldOptions": {
+                "placeholder": "Describe your story outline in detail..."
+              }
+            },
+            {
+              "fieldLabel": "Genre",
+              "fieldType": "text",
+              "requiredField": false,
+              "fieldOptions": {
+                "placeholder": "e.g., Fantasy, Sci-Fi, Mystery, Romance"
+              }
+            },
+            {
+              "fieldLabel": "Number of Chapters",
+              "fieldType": "number",
+              "requiredField": false,
+              "fieldOptions": {}
+            },
+            {
+              "fieldLabel": "Word Counter per Chapter",
+              "fieldType": "number",
+              "requiredField": false,
+              "fieldOptions": {}
+            }
+          ]
+        },
+        "options": {
+          "formSubmittedText": "Thank you! Your story is being processed. You'll receive the Story ID shortly."
+        },
+        "respondWithOptions": {
+          "values": {
+            "respondWith": "text"
+          }
+        }
       },
-      "id": "webhook-trigger",
-      "name": "Webhook - Story Submission",
-      "type": "n8n-nodes-base.webhook",
-      "typeVersion": 1,
+      "id": "form-trigger",
+      "name": "Form Trigger - Story Submission",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2,
       "position": [
         240,
         300
       ],
-      "webhookId": "story-submission-webhook"
+      "webhookId": "story-submission-form"
     },
     {
       "parameters": {
-        "functionCode": "// Generate unique Story ID\nconst storyId = `STORY_${Date.now()}`;\n\n// Extract form data\nconst bookName = $input.item.json.body.book_name || 'Untitled';\nconst outlineOfStory = $input.item.json.body.outline_of_story || '';\nconst genre = $input.item.json.body.genre || 'General';\nconst numberOfChapters = parseInt($input.item.json.body.number_of_chapters) || 0;\nconst wordsPerChapter = parseInt($input.item.json.body.word_counter_per_chapter) || 0;\n\n// Calculate total word count\nconst calculatedTotalWords = numberOfChapters * wordsPerChapter;\n\n// Generate timestamp\nconst submissionTimestamp = new Date().toISOString();\n\n// Return formatted data\nreturn {\n  json: {\n    story_id: storyId,\n    book_name: bookName,\n    outline_of_story: outlineOfStory,\n    genre: genre,\n    number_of_chapters: numberOfChapters,\n    word_counter_per_chapter: wordsPerChapter,\n    calculated_total_words: calculatedTotalWords,\n    submission_timestamp: submissionTimestamp\n  }\n};"
+        "functionCode": "// Generate unique Story ID\nconst storyId = `STORY_${Date.now()}`;\n\n// Extract form data (Form Trigger provides data directly)\nconst bookName = $input.item.json['Book Name'] || 'Untitled';\nconst outlineOfStory = $input.item.json['Outline of Story'] || '';\nconst genre = $input.item.json['Genre'] || 'General';\nconst numberOfChapters = parseInt($input.item.json['Number of Chapters']) || 0;\nconst wordsPerChapter = parseInt($input.item.json['Word Counter per Chapter']) || 0;\n\n// Calculate total word count\nconst calculatedTotalWords = numberOfChapters * wordsPerChapter;\n\n// Generate timestamp\nconst submissionTimestamp = new Date().toISOString();\n\n// Return formatted data\nreturn {\n  json: {\n    story_id: storyId,\n    book_name: bookName,\n    outline_of_story: outlineOfStory,\n    genre: genre,\n    number_of_chapters: numberOfChapters,\n    word_counter_per_chapter: wordsPerChapter,\n    calculated_total_words: calculatedTotalWords,\n    submission_timestamp: submissionTimestamp\n  }\n};"
       },
       "id": "function-generate-id",
       "name": "Generate Story ID & Calculate Words",
@@ -412,8 +456,8 @@
         "responseBody": "={\n  \"success\": true,\n  \"story_id\": \"{{ $json.story_id }}\",\n  \"message\": \"Your story '{{ $json.book_name }}' has been submitted successfully! All workflows have been triggered.\",\n  \"details\": {\n    \"book_name\": \"{{ $json.book_name }}\",\n    \"genre\": \"{{ $json.genre }}\",\n    \"chapters\": {{ $json.number_of_chapters }},\n    \"words_per_chapter\": {{ $json.word_counter_per_chapter }},\n    \"total_words\": {{ $json.calculated_total_words }}\n  }\n}",
         "options": {}
       },
-      "id": "respond-webhook",
-      "name": "Respond to Webhook",
+      "id": "respond-form",
+      "name": "Respond to Form",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
@@ -423,7 +467,7 @@
     }
   ],
   "connections": {
-    "Webhook - Story Submission": {
+    "Form Trigger - Story Submission": {
       "main": [
         [
           {
@@ -497,7 +541,7 @@
       "main": [
         [
           {
-            "node": "Respond to Webhook",
+            "node": "Respond to Form",
             "type": "main",
             "index": 0
           }
@@ -508,7 +552,7 @@
       "main": [
         [
           {
-            "node": "Respond to Webhook",
+            "node": "Respond to Form",
             "type": "main",
             "index": 0
           }
@@ -519,7 +563,7 @@
       "main": [
         [
           {
-            "node": "Respond to Webhook",
+            "node": "Respond to Form",
             "type": "main",
             "index": 0
           }
@@ -530,7 +574,7 @@
       "main": [
         [
           {
-            "node": "Respond to Webhook",
+            "node": "Respond to Form",
             "type": "main",
             "index": 0
           }

@@ -8,7 +8,7 @@ This system provides a complete workflow automation solution for writers, publis
 
 **What it does:**
 
-1. Accepts story idea submissions via web form
+1. Accepts story idea submissions via **n8n-hosted form** (built-in Form Trigger)
 2. Generates unique Story ID and organizes data in Google Sheets
 3. Creates structured Google Drive folder for all generated content
 4. Uses OpenAI GPT-4 to generate:
@@ -21,7 +21,7 @@ This system provides a complete workflow automation solution for writers, publis
 ## System Architecture
 
 ```
-HTML Form
+n8n Form Trigger
    ↓
 Story Initialization (n8n)
    ├─ Generate Story ID
@@ -33,6 +33,8 @@ Story Initialization (n8n)
        ├─ Worldbuilding Development (OpenAI → Drive)
        └─ Chapter Planning (OpenAI → Drive)
 ```
+
+> **Note**: The system uses n8n's built-in **Form Trigger** for submissions. Custom HTML forms (in `form/` folder) are provided as an alternative option but not required.
 
 ## Key Features
 
@@ -51,13 +53,14 @@ Story Initialization (n8n)
 - Google account (for Sheets and Drive)
 - OpenAI API account ([Get API key](https://platform.openai.com/))
 
-### Installation (5 Steps)
+### Installation (4 Steps)
 
 1. **Set up credentials** → Follow [docs/CREDENTIALS_CONFIG.md](./docs/CREDENTIALS_CONFIG.md)
-2. **Import workflows** → Import 5 JSON files from `workflows/` folder
-3. **Configure webhooks** → Follow [docs/SETUP_GUIDE.md](./docs/SETUP_GUIDE.md)
-4. **Deploy form** → Host files from `form/` folder (see [docs/DEPLOYMENT_GUIDE.md](./docs/DEPLOYMENT_GUIDE.md))
-5. **Test** → Submit a story and verify results (see [docs/TESTING_GUIDE.md](./docs/TESTING_GUIDE.md))
+2. **Import workflows** → Import 5 JSON files from `workflows/` folder into n8n
+3. **Configure & activate** → Follow [docs/SETUP_GUIDE.md](./docs/SETUP_GUIDE.md)
+4. **Get form URL** → Activate Story Initialization workflow and copy the form URL from the Form Trigger node
+
+> **Optional**: Deploy custom HTML form from `form/` folder (see [docs/DEPLOYMENT_GUIDE.md](./docs/DEPLOYMENT_GUIDE.md))
 
 ## File Structure
 
@@ -69,7 +72,7 @@ Story Initialization (n8n)
 │   ├── 04_worldbuilding_development.json # AI world documentation
 │   └── 05_chapter_planning.json        # AI chapter outlines
 │
-├── form/                               # HTML submission form
+├── form/                               # HTML submission form (OPTIONAL - alternative to Form Trigger)
 │   ├── index.html                      # Form structure
 │   ├── styles.css                      # Form styling
 │   └── script.js                       # Submission logic
@@ -147,7 +150,14 @@ Per story submission:
 
 ### 1. Story Initialization Workflow
 
-**Trigger**: Webhook from form submission
+**Trigger**: n8n Form Trigger (built-in hosted form)
+
+**Form Fields**:
+- Book Name (text, optional)
+- Outline of Story (textarea, **required**)
+- Genre (text, optional)
+- Number of Chapters (number, optional)
+- Word Counter per Chapter (number, optional)
 
 **Actions**:
 - Generates unique Story ID (`STORY_[timestamp]`)
@@ -157,7 +167,7 @@ Per story submission:
 - Triggers 4 downstream AI workflows in parallel
 - Returns success response with Story ID
 
-**Nodes**: 10 nodes (Webhook, Function, Google Sheets, Google Drive ×2, HTTP Request ×4, Respond)
+**Nodes**: 10 nodes (Form Trigger, Function, Google Sheets, Google Drive ×2, HTTP Request ×4, Respond)
 
 ### 2. Synopsis Development Workflow
 
