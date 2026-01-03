@@ -525,21 +525,6 @@
         1340,
         500
       ]
-    },
-    {
-      "parameters": {
-        "respondWith": "json",
-        "responseBody": "={\n  \"success\": true,\n  \"story_id\": \"{{ $json.story_id }}\",\n  \"message\": \"Your story '{{ $json.book_name }}' has been submitted successfully! All workflows have been triggered.\",\n  \"details\": {\n    \"book_name\": \"{{ $json.book_name }}\",\n    \"genre\": \"{{ $json.genre }}\",\n    \"chapters\": {{ $json.number_of_chapters }},\n    \"words_per_chapter\": {{ $json.word_counter_per_chapter }},\n    \"total_words\": {{ $json.calculated_total_words }}\n  }\n}",
-        "options": {}
-      },
-      "id": "respond-form",
-      "name": "Respond to Form",
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1,
-      "position": [
-        1560,
-        300
-      ]
     }
   ],
   "connections": {
@@ -607,50 +592,6 @@
           },
           {
             "node": "Trigger Chapter Planning Workflow",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Trigger Synopsis Workflow": {
-      "main": [
-        [
-          {
-            "node": "Respond to Form",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Trigger Character Workflow": {
-      "main": [
-        [
-          {
-            "node": "Respond to Form",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Trigger Worldbuilding Workflow": {
-      "main": [
-        [
-          {
-            "node": "Respond to Form",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Trigger Chapter Planning Workflow": {
-      "main": [
-        [
-          {
-            "node": "Respond to Form",
             "type": "main",
             "index": 0
           }
