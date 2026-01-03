@@ -23,10 +23,111 @@
             },
             {
               "fieldLabel": "Genre",
-              "fieldType": "text",
+              "fieldType": "dropdown",
               "requiredField": false,
               "fieldOptions": {
-                "placeholder": "e.g., Fantasy, Sci-Fi, Mystery, Romance"
+                "choices": [
+                  {
+                    "label": "Fantasy",
+                    "value": "Fantasy"
+                  },
+                  {
+                    "label": "Science Fiction",
+                    "value": "Science Fiction"
+                  },
+                  {
+                    "label": "Romance",
+                    "value": "Romance"
+                  },
+                  {
+                    "label": "Mystery",
+                    "value": "Mystery"
+                  },
+                  {
+                    "label": "Thriller",
+                    "value": "Thriller"
+                  },
+                  {
+                    "label": "Horror",
+                    "value": "Horror"
+                  },
+                  {
+                    "label": "Historical Fiction",
+                    "value": "Historical Fiction"
+                  },
+                  {
+                    "label": "Literary Fiction",
+                    "value": "Literary Fiction"
+                  },
+                  {
+                    "label": "Contemporary Fiction",
+                    "value": "Contemporary Fiction"
+                  },
+                  {
+                    "label": "Young Adult",
+                    "value": "Young Adult"
+                  },
+                  {
+                    "label": "Adventure",
+                    "value": "Adventure"
+                  },
+                  {
+                    "label": "Crime",
+                    "value": "Crime"
+                  },
+                  {
+                    "label": "Western",
+                    "value": "Western"
+                  },
+                  {
+                    "label": "Dystopian",
+                    "value": "Dystopian"
+                  },
+                  {
+                    "label": "Paranormal",
+                    "value": "Paranormal"
+                  },
+                  {
+                    "label": "Humor",
+                    "value": "Humor"
+                  },
+                  {
+                    "label": "Satire",
+                    "value": "Satire"
+                  },
+                  {
+                    "label": "Women's Fiction",
+                    "value": "Women's Fiction"
+                  },
+                  {
+                    "label": "Action",
+                    "value": "Action"
+                  },
+                  {
+                    "label": "Suspense",
+                    "value": "Suspense"
+                  },
+                  {
+                    "label": "Drama",
+                    "value": "Drama"
+                  },
+                  {
+                    "label": "Magical Realism",
+                    "value": "Magical Realism"
+                  },
+                  {
+                    "label": "Gothic",
+                    "value": "Gothic"
+                  },
+                  {
+                    "label": "Erotica",
+                    "value": "Erotica"
+                  },
+                  {
+                    "label": "Urban Fantasy",
+                    "value": "Urban Fantasy"
+                  }
+                ]
               }
             },
             {
